@@ -294,13 +294,14 @@ class RocketBaseEnv(gymnasium.Env):
             action (np.ndarray): action
 
         Returns:
-            state, reward, termination, truncation, info
+            state, reward, fitness, termination, truncation, info
         """
         # unsqueeze the action to be usable in aviary
         self.action = action.copy()
 
         # reset the reward and set the action
         self.reward = 0.0
+        self.fitness = 0.0 # fitness function to be used for learning rewards
         self.env.set_setpoint(0, action)
 
         # step through env, the internal env updates a few steps before the outer env
@@ -317,6 +318,9 @@ class RocketBaseEnv(gymnasium.Env):
 
         # increment step count
         self.step_count += 1
+        
+        # add fitness function to info
+        self.info['fitness'] = self.fitness
 
         return self.state, self.reward, self.termination, self.truncation, self.info
 
