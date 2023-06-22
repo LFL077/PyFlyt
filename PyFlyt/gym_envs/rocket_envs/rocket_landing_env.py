@@ -255,7 +255,7 @@ class RocketLandingEnv(RocketBaseEnv):
                 - (self.reward_options[5] * angular_velocity)  # not spinning
                 - (self.reward_options[6] * angular_position)  # and upright
                 - (self.reward_options[7] * linear_velocity)   # basically stopped
-                + (self.reward_options[8] / (distance_to_pad + 0.001))   # we want to be at the pad
+                - (self.reward_options[8] * (distance_to_pad + 0.001))   # we want to be at the pad
                 )
             
             
