@@ -317,7 +317,7 @@ class RocketLandingEnv(RocketBaseEnv):
         # check if we touched the landing pad
         if self.env.contact_array[self.env.drones[0].Id, self.landing_pad_id]:
             self.landing_pad_contact = 1.0
-            self.reward += 50 # optimisation will maximize this, so giving a high value anyway
+            self.reward += 5000 # optimisation will maximize this, so giving a high value anyway
             self.fitness += 1 # improves fitness if touching pad
         else:
             self.landing_pad_contact = 0.0
@@ -342,7 +342,7 @@ class RocketLandingEnv(RocketBaseEnv):
             and np.linalg.norm(self.previous_lin_vel) < 0.02
             and np.linalg.norm(self.ang_pos[:2]) < 0.1
         ):
-            self.reward += 1000 # just giving a very high completion bonus
+            self.reward += 100000 # just giving a very high completion bonus
             self.info["env_complete"] = True
             self.termination |= True
             self.fitness += 100 # greatly improve fitness if successful landing
