@@ -212,7 +212,8 @@ class RocketLandingEnv(RocketBaseEnv):
                 )
                 / self.distance[-1]
             )
-
+            
+            '''
             # composite reward together
             
             # self.reward += (
@@ -231,14 +232,12 @@ class RocketLandingEnv(RocketBaseEnv):
             # - (1.0 * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
             # # + (5.0 * deceleration_bonus)  # reward deceleration when near pad
             
-            # '''
             # LfL: 18.06.2023
             # variable reward function for optimisation
             # "winning" conditions:
             #     np.linalg.norm(self.previous_ang_vel) < 0.02
             #     and np.linalg.norm(self.previous_lin_vel) < 0.02
             #     and np.linalg.norm(self.ang_pos[:2]) < 0.1
-            # ''' 
             # # print(self.reward_options)
             
             # angular_velocity = np.linalg.norm(self.ang_vel)
@@ -257,11 +256,11 @@ class RocketLandingEnv(RocketBaseEnv):
             #     - (self.reward_options[7] * linear_velocity)   # basically stopped
             #     - (self.reward_options[8] * distance_to_pad)   # we want to be at the pad
             #     )
-            
             '''
-            LfL: 25.06.2023
-            variable reward function 2 for optimisation: including all states
-            ''' 
+            
+            # LfL: 25.06.2023
+            # variable reward function 2 for optimisation: including all states
+ 
             ang_vel = self.state[:3]
             ang_pos = self.state[3:7]
             lin_vel = self.state[7:10]
@@ -286,8 +285,7 @@ class RocketLandingEnv(RocketBaseEnv):
             gimbal_state_0 = np.linalg.norm(aux_state[7])
             gimbal_state_1 = np.linalg.norm(aux_state[8])
             # landing_pad_contact = np.linalg.norm(landing_pad_contact_obs) # also don't need this, already included
-            # distance_to_pad_rotated = np.linalg.norm(rotated_distance) # ans this one repeats the other
-
+            # distance_to_pad_rotated = np.linalg.norm(rotated_distance) # and this one repeats the other
 
             angular_velocity = np.linalg.norm(self.ang_vel)
             angular_position = np.linalg.norm(self.ang_pos)
@@ -311,7 +309,15 @@ class RocketLandingEnv(RocketBaseEnv):
                 - (self.reward_options[13] * gimbal_state_1) 
                 )
 
-
+            # LfL: 28.06.2023
+            # Adding the original function again    
+            self.reward += (
+                -self.reward_options[14] # negative offset to discourage staying in the air
+                + (self.reward_options[15] / offset_to_pad)  # encourage being near the pad
+                + (self.reward_options[16] * progress_to_pad)  # encourage progress to landing pad
+                -(self.reward_options[17] * abs(self.ang_vel[-1]))  # minimize spinning
+                - (self.reward_options[18] * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
+            )
 
 
         # check if we touched the landing pad
