@@ -279,7 +279,7 @@ class RocketLandingEnv(RocketBaseEnv):
             lift_surface_1 = np.linalg.norm(aux_state[1])
             lift_surface_2 = np.linalg.norm(aux_state[2])
             lift_surface_3 = np.linalg.norm(aux_state[3])
-            ignition_steate = np.linalg.norm(aux_state[4])
+            ignition_state = np.linalg.norm(aux_state[4])
             remaining_fuel = np.linalg.norm(aux_state[5])
             current_throttle = np.linalg.norm(aux_state[6])
             gimbal_state_0 = np.linalg.norm(aux_state[7])
@@ -302,8 +302,8 @@ class RocketLandingEnv(RocketBaseEnv):
                 - (self.reward_options[6] * lift_surface_1) 
                 - (self.reward_options[7] * lift_surface_2) 
                 - (self.reward_options[8] * lift_surface_3) 
-                - (self.reward_options[9] * ignition_steate) 
-                - (self.reward_options[10] * remaining_fuel) 
+                - (self.reward_options[9] * ignition_state) 
+                + (self.reward_options[10] * remaining_fuel) 
                 - (self.reward_options[11] * current_throttle) 
                 - (self.reward_options[12] * gimbal_state_0) 
                 - (self.reward_options[13] * gimbal_state_1) 
@@ -323,10 +323,11 @@ class RocketLandingEnv(RocketBaseEnv):
         # check if we touched the landing pad
         if self.env.contact_array[self.env.drones[0].Id, self.landing_pad_id]:
             self.landing_pad_contact = 1.0
-            self.reward += 5000 # optimisation will maximize this, so giving a high value anyway
+            # self.reward += 5000 # optimisation will maximize this, so giving a high value anyway
             self.fitness += 1 # improves fitness if touching pad
         else:
             self.landing_pad_contact = 0.0
+            self.reward -= 50000
             return
 
         # if collision has more than 0.35 rad/s angular velocity, we dead
@@ -340,6 +341,7 @@ class RocketLandingEnv(RocketBaseEnv):
         ):
             self.info["fatal_collision"] = True
             self.termination |= True
+            self.reward -= 1000000
             return
 
         # if our both velocities are less than 0.02 m/s and we upright, we LANDED!
@@ -348,7 +350,7 @@ class RocketLandingEnv(RocketBaseEnv):
             and np.linalg.norm(self.previous_lin_vel) < 0.02
             and np.linalg.norm(self.ang_pos[:2]) < 0.1
         ):
-            self.reward += 100000 # just giving a very high completion bonus
+            # self.reward += 100000 # just giving a very high completion bonus
             self.info["env_complete"] = True
             self.termination |= True
             self.fitness += 100 # greatly improve fitness if successful landing
