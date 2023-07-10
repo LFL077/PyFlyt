@@ -105,9 +105,12 @@ class RocketLandingEnv(RocketBaseEnv):
         # reset the tracked parameters
         self.landing_pad_contact = 0.0
         self.ang_vel = np.zeros((3,))
+        self.ang_pos = np.zeros((3,))
         self.lin_vel = np.zeros((3,))
         self.distance = np.zeros((3,))
+
         self.previous_ang_vel = np.zeros((3,))
+        self.previous_ang_pos = np.zeros((3,))
         self.previous_lin_vel = np.zeros((3,))
         self.previous_distance = np.zeros((3,))
 
@@ -142,6 +145,7 @@ class RocketLandingEnv(RocketBaseEnv):
         """
         # update the previous values to current values
         self.previous_ang_vel = self.ang_vel.copy()
+        self.previous_ang_pos = self.ang_pos.copy()
         self.previous_lin_vel = self.lin_vel.copy()
         self.previous_distance = self.distance.copy()
 
@@ -213,6 +217,7 @@ class RocketLandingEnv(RocketBaseEnv):
                 / self.distance[-1]
             )
             
+
             '''
             # composite reward together
             
@@ -256,7 +261,6 @@ class RocketLandingEnv(RocketBaseEnv):
             #     - (self.reward_options[7] * linear_velocity)   # basically stopped
             #     - (self.reward_options[8] * distance_to_pad)   # we want to be at the pad
             #     )
-            '''
             
             # LfL: 25.06.2023
             # variable reward function 2 for optimisation: including all states
@@ -318,16 +322,73 @@ class RocketLandingEnv(RocketBaseEnv):
                 -(self.reward_options[17] * abs(self.ang_vel[-1]))  # minimize spinning
                 - (self.reward_options[18] * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
             )
+            '''
+            
+            ang_vel = self.state[:3]
+            ang_pos = self.state[3:7]
+            lin_vel = self.state[7:10]
+            lin_pos = self.state[10:13]
+            aux_state = self.state[20:29]
+            
+            angular_velocity = np.linalg.norm(self.ang_vel)
+            previous_angular_velocity = np.linalg.norm(self.previous_ang_vel)
+            delta_ang_vel = -abs(0 - angular_velocity)
+            
+            angular_position = np.linalg.norm(self.ang_pos[:2])
+            previous_angular_position = np.linalg.norm(self.previous_ang_pos[:2])
+            delta_ang_pos = previous_angular_position - angular_position 
+            
+            linear_velocity = np.linalg.norm(self.lin_vel)
+            previous_linear_velocity = np.linalg.norm(self.previous_lin_vel)
+            delta_lin_vel = previous_linear_velocity - linear_velocity
+            
+            distance_to_pad = np.linalg.norm(lin_pos)
+            remaining_fuel = np.linalg.norm(aux_state[5])
+            
+            # print(delta_ang_vel)
+            # print(delta_ang_pos)
+            # print(delta_lin_vel)
+            # print(progress_to_pad)
+            # print(distance_to_pad)
+            # print(remaining_fuel)
+            # input()
+            
+            if distance_to_pad > 200:
+                # print(distance_to_pad)
+                self.reward += (
+                    - (self.reward_options[0]) # negative offset to discourage staying in the air
+                    + (self.reward_options[1] * progress_to_pad)  # encourage progress to landing pad
+                    + (self.reward_options[2] * (100*remaining_fuel) - 1) # to avoid spending fuel
+                    + (self.reward_options[3] * delta_ang_vel) # minimize spinning
+                    )
+            else:
+                # print(distance_to_pad)
+                self.reward += (
+                    - (self.reward_options[4]) # negative offset to discourage staying in the air
+                    + (self.reward_options[5] * progress_to_pad) # encourage progress to landing pad
+                    + (self.reward_options[6] * delta_ang_vel) # minimize spinning
+                    + (self.reward_options[7] * delta_ang_pos) # penalize aggressive angles
+                    + (self.reward_options[8] * delta_lin_vel) # decrease speed
+                    + (self.reward_options[9] / (distance_to_pad + 0.1))  # encourage being near the pad
+                    )
 
-
+            # composite reward together
+            self.reward += (
+                - (self.reward_options[14]) # negative offset to discourage staying in the air
+                + (self.reward_options[15] / offset_to_pad)  # encourage being near the pad
+                + (self.reward_options[16] * progress_to_pad)  # encourage progress to landing pad
+                - (self.reward_options[17] * abs(self.ang_vel[-1]))  # minimize spinning
+                - (self.reward_options[18] * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
+            )
+            
         # check if we touched the landing pad
         if self.env.contact_array[self.env.drones[0].Id, self.landing_pad_id]:
             self.landing_pad_contact = 1.0
-            # self.reward += 5000 # optimisation will maximize this, so giving a high value anyway
+            self.reward += self.reward_options[19] # optimisation will maximize this, so giving a high value anyway
             self.fitness += 1 # improves fitness if touching pad
         else:
             self.landing_pad_contact = 0.0
-            self.reward -= 50000
+            self.reward -= self.reward_options[20]
             return
 
         # if collision has more than 0.35 rad/s angular velocity, we dead
@@ -341,7 +402,7 @@ class RocketLandingEnv(RocketBaseEnv):
         ):
             self.info["fatal_collision"] = True
             self.termination |= True
-            self.reward -= 1000000
+            self.reward -= self.reward_options[21]
             return
 
         # if our both velocities are less than 0.02 m/s and we upright, we LANDED!
@@ -350,7 +411,7 @@ class RocketLandingEnv(RocketBaseEnv):
             and np.linalg.norm(self.previous_lin_vel) < 0.02
             and np.linalg.norm(self.ang_pos[:2]) < 0.1
         ):
-            # self.reward += 100000 # just giving a very high completion bonus
+            self.reward += self.reward_options[22] # just giving a very high completion bonus
             self.info["env_complete"] = True
             self.termination |= True
             self.fitness += 100 # greatly improve fitness if successful landing
