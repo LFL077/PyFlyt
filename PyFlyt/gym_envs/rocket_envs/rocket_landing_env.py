@@ -37,6 +37,7 @@ class RocketLandingEnv(RocketBaseEnv):
         agent_hz: int = 40,
         render_mode: None | str = None,
         render_resolution: tuple[int, int] = (480, 480),
+        discount_factor = 0.99
     ):
         """__init__.
 
@@ -81,6 +82,7 @@ class RocketLandingEnv(RocketBaseEnv):
 
         """CONSTANTS"""
         self.sparse_reward = sparse_reward
+        self.discount_factor = discount_factor
 
     def reset(self, seed=None, options=dict()):
         """Resets the environment.
@@ -97,7 +99,7 @@ class RocketLandingEnv(RocketBaseEnv):
         self.fitness = 0.0 # fitness function to be used for learning rewards
         self.reward_options = options # included here for reward function optimisation
         
-        options = dict(randomize_drop=True, accelerate_drop=True)
+        options = dict(randomize_drop=True, accelerate_drop=True) # can be disabled
         drone_options = dict(starting_fuel_ratio=0.01)
 
         super().begin_reset(seed, options, drone_options)
@@ -115,6 +117,7 @@ class RocketLandingEnv(RocketBaseEnv):
         self.previous_distance = np.zeros((3,))
 
         # randomly generate the target landing location
+        # make both zero to spawn the platform on the same place always
         theta = self.np_random.uniform(0.0, 2.0 * np.pi)
         distance = self.np_random.uniform(0.0, 0.05 * self.ceiling)
         self.landing_pad_position = (
@@ -329,20 +332,29 @@ class RocketLandingEnv(RocketBaseEnv):
             lin_vel = self.state[7:10]
             lin_pos = self.state[10:13]
             aux_state = self.state[20:29]
+            df = self.discount_factor
+            
+            '''
+            F(s, a, s') = gPHI(s') - PHI(s)
+            - F(s, a, s') = PHI(s) - gPHI(s')
+            '''
             
             angular_velocity = np.linalg.norm(self.ang_vel)
             previous_angular_velocity = np.linalg.norm(self.previous_ang_vel)
-            delta_ang_vel = -abs(0 - angular_velocity)
+            delta_ang_vel = previous_angular_velocity - df*angular_velocity
             
             angular_position = np.linalg.norm(self.ang_pos[:2])
             previous_angular_position = np.linalg.norm(self.previous_ang_pos[:2])
-            delta_ang_pos = previous_angular_position - angular_position 
+            delta_ang_pos = previous_angular_position - df*angular_position 
             
             linear_velocity = np.linalg.norm(self.lin_vel)
             previous_linear_velocity = np.linalg.norm(self.previous_lin_vel)
-            delta_lin_vel = previous_linear_velocity - linear_velocity
+            delta_lin_vel = previous_linear_velocity - df*linear_velocity
             
-            distance_to_pad = np.linalg.norm(lin_pos)
+            distance_to_pad = np.linalg.norm(self.distance)
+            previous_distance_to_pad = np.linalg.norm(self.previous_distance)
+            delta_distance = previous_distance_to_pad - df*distance_to_pad 
+            
             remaining_fuel = np.linalg.norm(aux_state[5])
             
             # print(delta_ang_vel)
@@ -357,7 +369,7 @@ class RocketLandingEnv(RocketBaseEnv):
                 # print(distance_to_pad)
                 self.reward += (
                     - (self.reward_options[0]) # negative offset to discourage staying in the air
-                    + (self.reward_options[1] * progress_to_pad)  # encourage progress to landing pad
+                    + (self.reward_options[1] * delta_distance)  # encourage progress to landing pad
                     + (self.reward_options[2] * (100*remaining_fuel) - 1) # to avoid spending fuel
                     + (self.reward_options[3] * delta_ang_vel) # minimize spinning
                     )
@@ -365,7 +377,7 @@ class RocketLandingEnv(RocketBaseEnv):
                 # print(distance_to_pad)
                 self.reward += (
                     - (self.reward_options[4]) # negative offset to discourage staying in the air
-                    + (self.reward_options[5] * progress_to_pad) # encourage progress to landing pad
+                    + (self.reward_options[5] * delta_distance) # encourage progress to landing pad
                     + (self.reward_options[6] * delta_ang_vel) # minimize spinning
                     + (self.reward_options[7] * delta_ang_pos) # penalize aggressive angles
                     + (self.reward_options[8] * delta_lin_vel) # decrease speed
