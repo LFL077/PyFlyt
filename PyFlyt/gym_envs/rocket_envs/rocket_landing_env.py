@@ -357,33 +357,38 @@ class RocketLandingEnv(RocketBaseEnv):
             
             remaining_fuel = np.linalg.norm(aux_state[5])
             
-            # print(delta_ang_vel)
-            # print(delta_ang_pos)
-            # print(delta_lin_vel)
-            # print(progress_to_pad)
-            # print(distance_to_pad)
-            # print(remaining_fuel)
-            # input()
-            
-            if distance_to_pad > 200:
-                # print(distance_to_pad)
-                self.reward += (
-                    - (self.reward_options[0]) # negative offset to discourage staying in the air
-                    + (self.reward_options[1] * delta_distance)  # encourage progress to landing pad
-                    + (self.reward_options[2] * (100*remaining_fuel) - 1) # to avoid spending fuel
-                    + (self.reward_options[3] * delta_ang_vel) # minimize spinning
-                    )
-            else:
-                # print(distance_to_pad)
-                self.reward += (
-                    - (self.reward_options[4]) # negative offset to discourage staying in the air
-                    + (self.reward_options[5] * delta_distance) # encourage progress to landing pad
-                    + (self.reward_options[6] * delta_ang_vel) # minimize spinning
-                    + (self.reward_options[7] * delta_ang_pos) # penalize aggressive angles
-                    + (self.reward_options[8] * delta_lin_vel) # decrease speed
-                    + (self.reward_options[9] / (distance_to_pad + 0.1))  # encourage being near the pad
-                    )
+           
+            # if distance_to_pad > 1000:
+            #     self.reward += (
+            #         - (self.reward_options[0]) # negative offset to discourage staying in the air
+            #         + (self.reward_options[1] * delta_distance)  # encourage progress to landing pad
+            #         + (self.reward_options[2] * (100*remaining_fuel) - 1) # to avoid spending fuel
+            #         + (self.reward_options[3] * delta_ang_vel) # minimize spinning
+            #         )
+            # else:
+            #     self.reward += (
+            #         - (self.reward_options[4]) # negative offset to discourage staying in the air
+            #         + (self.reward_options[5] * delta_distance) # encourage progress to landing pad
+            #         + (self.reward_options[6] * delta_ang_vel) # minimize spinning
+            #         + (self.reward_options[7] * delta_ang_pos) # penalize aggressive angles
+            #         + (self.reward_options[8] * delta_lin_vel) # decrease speed
+            #         + (self.reward_options[9] / (distance_to_pad + 0.1))  # encourage being near the pad
+            #         + (self.reward_options[10] * (100*remaining_fuel) - 1) # to avoid spending fuel
+            #         )
 
+            self.reward += (
+                - (self.reward_options[4]) # negative offset to discourage staying in the air
+                + df * (self.reward_options[5] / (distance_to_pad + 0.1))
+                - (self.reward_options[5] / (previous_distance_to_pad + 0.1))# encourage progress to landing pad
+                + df * (self.reward_options[6] / (angular_velocity + 0.1)) # minimize spinning
+                - (self.reward_options[6] / (previous_angular_velocity + 0.1))
+                + df * (self.reward_options[7] / (angular_position + 0.1)) # penalize aggressive angles
+                - (self.reward_options[7] / (previous_angular_position + 0.1))
+                + df * (self.reward_options[8] / (linear_velocity + 0.1)) # decrease speed
+                - (self.reward_options[8] / (previous_linear_velocity + 0.1))
+                + (self.reward_options[10] * (100*remaining_fuel) - 1) # to avoid spending fuel
+                )
+                
             # composite reward together
             self.reward += (
                 - (self.reward_options[14]) # negative offset to discourage staying in the air
