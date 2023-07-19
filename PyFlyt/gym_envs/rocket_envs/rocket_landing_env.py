@@ -37,7 +37,8 @@ class RocketLandingEnv(RocketBaseEnv):
         agent_hz: int = 40,
         render_mode: None | str = None,
         render_resolution: tuple[int, int] = (480, 480),
-        discount_factor = 0.99
+        discount_factor = 0.99,
+        faktor = 1
     ):
         """__init__.
 
@@ -83,6 +84,7 @@ class RocketLandingEnv(RocketBaseEnv):
         """CONSTANTS"""
         self.sparse_reward = sparse_reward
         self.discount_factor = discount_factor
+        self.faktor = faktor
 
     def reset(self, seed=None, options=dict()):
         """Resets the environment.
@@ -94,15 +96,16 @@ class RocketLandingEnv(RocketBaseEnv):
         
         '''
         Those are here for the optimisation, we may not need the fitness 
-        in the envirionment if using success as fitness
+        in the environment if using success as fitness
         '''
         self.fitness = 0.0 # fitness function to be used for learning rewards
         self.reward_options = options # included here for reward function optimisation
         
-        options = dict(randomize_drop=True, accelerate_drop=True) # can be disabled
-        options = dict(randomize_drop=False, accelerate_drop=False)
+        options = dict(randomize_drop=True, accelerate_drop=True)
+        # options = dict(randomize_drop=False, accelerate_drop=False)
         
         drone_options = dict(starting_fuel_ratio=0.01)
+        # drone_options = dict(starting_fuel_ratio=0.50)
 
         super().begin_reset(seed, options, drone_options)
 
@@ -122,9 +125,6 @@ class RocketLandingEnv(RocketBaseEnv):
         # make both zero to spawn the platform on the same place always
         theta = self.np_random.uniform(0.0, 2.0 * np.pi)
         distance = self.np_random.uniform(0.0, 0.05 * self.ceiling)
-
-        theta = 0
-        distance = 0
 
         self.landing_pad_position = (
             np.array([np.cos(theta), np.sin(theta), 0.1]) * distance
@@ -371,8 +371,7 @@ class RocketLandingEnv(RocketBaseEnv):
                 + (self.reward_options[2] * delta_ang_vel) # minimize spinning
                 + (self.reward_options[3] * delta_ang_pos) # penalize aggressive angles
                 + (self.reward_options[4] * delta_lin_vel) # decrease speed
-                + (self.reward_options[5] / (distance_to_pad + 0.1))  # encourage being near the pad
-                + (self.reward_options[6] * (100*remaining_fuel) - 1) # to avoid spending fuel
+                + (self.reward_options[5] * (100*remaining_fuel) - 1) # to avoid spending fuel
                 )
 
             # potential-based harmonic function PHI=1/linalg.norm(s)
@@ -411,9 +410,10 @@ class RocketLandingEnv(RocketBaseEnv):
         # number taken from here:
         # https://cosmosmagazine.com/space/launch-land-repeat-reusable-rockets-explained/
         # but doing so is kinda impossible for RL, so I've lessened the requirement to 1.0
+        # LfL: actually 20km/h so in reality 5.56 m/s
         if (
-            np.linalg.norm(self.previous_ang_vel) > 0.35
-            or np.linalg.norm(self.previous_lin_vel) > 1.0
+            np.linalg.norm(self.previous_ang_vel) > self.faktor*0.35
+            or np.linalg.norm(self.previous_lin_vel) > self.faktor*1.0
         ):
             self.info["fatal_collision"] = True
             self.termination |= True
@@ -421,13 +421,18 @@ class RocketLandingEnv(RocketBaseEnv):
             return
 
         # if our both velocities are less than 0.02 m/s and we upright, we LANDED!
+        # LfL: from here:
+        # https://space.stackexchange.com/questions/8771/how-stable-would-a-falcon-9-first-stage-be-after-it-has-landed-on-a-drone-ship
+        # someone calculated the overturn stability criteria for Falcon 9 and concluded
+        # tha max angle would be 23deg = 0.4 rad, so we can half it for safety
         if (
-            np.linalg.norm(self.previous_ang_vel) < 0.02
-            and np.linalg.norm(self.previous_lin_vel) < 0.02
-            and np.linalg.norm(self.ang_pos[:2]) < 0.1
+            np.linalg.norm(self.previous_ang_vel) < self.faktor*0.02
+            and np.linalg.norm(self.previous_lin_vel) < self.faktor*0.02
+            and np.linalg.norm(self.ang_pos[:2]) < self.faktor*0.1
         ):
             self.reward += self.reward_options[22] # just giving a very high completion bonus
             self.info["env_complete"] = True
             self.termination |= True
-            self.fitness += 100 # greatly improve fitness if successful landing
+            if self.faktor == 1:
+                self.fitness += 100 # greatly improve fitness if successful landing
             return
