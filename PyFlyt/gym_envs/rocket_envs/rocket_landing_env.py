@@ -413,13 +413,13 @@ class RocketLandingEnv(RocketBaseEnv):
                 delta_log_ang_pos =  - df*log10(angular_position+1) + log10(previous_angular_position+1)
                 delta_log_lin_vel =  - df*log10(linear_velocity+1) + log10(previous_linear_velocity+1)
                 delta_log_distance =  - df*log10(distance_to_pad+1) + log10(previous_distance_to_pad+1)
-                delta_log_f_rem = df*log10(f_rem) - log10(self.previous_f_rem)
+                delta_log_f_rem = df*log10(f_rem+1) - log10(self.previous_f_rem+1)
                 
                 self.reward += (- (self.reward_options[1]) # negative offset to discourage staying in the air
-                                + self.reward_options[2] * delta_log_ang_vel 
-                                + self.reward_options[3] * delta_log_ang_pos 
-                                + self.reward_options[4] * delta_log_lin_vel 
-                                + self.reward_options[5] * delta_log_distance
+                                + self.reward_options[2] * delta_log_distance
+                                + self.reward_options[3] * delta_log_ang_vel 
+                                + self.reward_options[4] * delta_log_ang_pos 
+                                + self.reward_options[5] * delta_log_lin_vel 
                                 + self.reward_options[6] * delta_log_f_rem)
             
         # check if we touched the landing pad
