@@ -371,7 +371,7 @@ class RocketLandingEnv(RocketBaseEnv):
                     - (self.reward_options[4] * abs(self.ang_vel[-1]))  # minimize spinning
                     - (self.reward_options[5] * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
                     + (self.reward_options[6] * deceleration_bonus)  # reward deceleration when near pad
-                )
+                    )
 
             if self.reward_options[0] == 1: #PHI_0
                 # potential-based difference of potentials function PHI_0=-||(s)||
@@ -388,7 +388,7 @@ class RocketLandingEnv(RocketBaseEnv):
                     + (self.reward_options[4] * delta_ang_pos) # penalize aggressive angles
                     + (self.reward_options[5] * delta_lin_vel) # decrease speed
                     + (self.reward_options[6] * delta_f_rem) # to avoid spending fuel
-                )
+                    )
             
             if self.reward_options[0] == 2: #PHI_1
                 # potential-based harmonic function PHI=1/||(s)||
@@ -415,13 +415,35 @@ class RocketLandingEnv(RocketBaseEnv):
                 delta_log_distance =  - df*log10(distance_to_pad+1) + log10(previous_distance_to_pad+1)
                 delta_log_f_rem = df*log10(f_rem+1) - log10(self.previous_f_rem+1)
                 
-                self.reward += (- (self.reward_options[1]) # negative offset to discourage staying in the air
-                                + self.reward_options[2] * delta_log_distance
-                                + self.reward_options[3] * delta_log_ang_vel 
-                                + self.reward_options[4] * delta_log_ang_pos 
-                                + self.reward_options[5] * delta_log_lin_vel 
-                                + self.reward_options[6] * delta_log_f_rem)
-            
+                self.reward += (
+                    - (self.reward_options[1]) # negative offset to discourage staying in the air
+                    + (self.reward_options[2] * delta_log_distance)
+                    + (self.reward_options[3] * delta_log_ang_vel) 
+                    + (self.reward_options[4] * delta_log_ang_pos )
+                    + (self.reward_options[5] * delta_log_lin_vel )
+                    + (self.reward_options[6] * delta_log_f_rem)
+                    )
+
+
+            if self.reward_options[0] == 4: #mix-match2
+                from math import log10
+                delta_log_ang_pos =  - df*log10(angular_position+1) + log10(previous_angular_position+1)
+                delta_log_distance =  - df*log10(distance_to_pad+1) + log10(previous_distance_to_pad+1)
+                
+                self.reward += (- (5) # negative offset to discourage staying in the air
+                                + (1 / offset_to_pad)  # encourage being near the pad
+                                + (100 * progress_to_pad)  # encourage progress to landing pad
+                                + (3 * delta_log_distance)
+                                - (2 * abs(self.ang_vel[-1]))  # minimize spinning
+                                + (df * (500 / (angular_velocity + 0.1)) 
+                                   - (500 / (previous_angular_velocity + 0.1))) # minimize spinning
+                                + (df * (5 / (angular_position + 0.1)) 
+                                   - (5 / (previous_angular_position + 0.1))) # penalize aggressive angles
+                                + (5 * delta_log_ang_pos)
+                                + (df * (750 / (linear_velocity + 0.1))
+                                   - (750 / (previous_linear_velocity + 0.1))))  # decrease speed       
+
+                
         # check if we touched the landing pad
         if self.env.contact_array[self.env.drones[0].Id, self.landing_pad_id]:
             self.landing_pad_contact = 1.0
