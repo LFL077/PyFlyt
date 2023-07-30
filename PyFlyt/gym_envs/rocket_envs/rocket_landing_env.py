@@ -429,6 +429,12 @@ class RocketLandingEnv(RocketBaseEnv):
                 from math import log10
                 delta_log_ang_pos =  - df*log10(angular_position+1) + log10(previous_angular_position+1)
                 delta_log_distance =  - df*log10(distance_to_pad+1) + log10(previous_distance_to_pad+1)
+
+                progress_to_pad = float(  # noqa
+                    np.linalg.norm(self.previous_distance[:2])
+                    - np.linalg.norm(self.distance[:2])
+                )                
+                offset_to_pad = np.linalg.norm(self.distance[:2]) + 0.1  # noqa
                 
                 self.reward += (- (5) # negative offset to discourage staying in the air
                                 + (1 / offset_to_pad)  # encourage being near the pad
