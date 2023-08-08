@@ -363,7 +363,7 @@ class RocketLandingEnv(RocketBaseEnv):
                     / self.distance[-1]
                 )
                     
-                # original composite reward together
+                # original composite reward together R_0
                 self.reward += (
                     - (self.reward_options[1]) # negative offset to discourage staying in the air
                     + (self.reward_options[2] / offset_to_pad)  # encourage being near the pad
@@ -373,7 +373,7 @@ class RocketLandingEnv(RocketBaseEnv):
                     + (self.reward_options[6] * deceleration_bonus)  # reward deceleration when near pad
                     )
 
-            if self.reward_options[0] == 1: #PHI_0
+            if self.reward_options[0] == 1: #PHI_1
                 # potential-based difference of potentials function PHI_0=-||(s)||
                 delta_ang_vel = - df*angular_velocity + previous_angular_velocity
                 delta_ang_pos = - df*angular_position + previous_angular_position
@@ -390,7 +390,7 @@ class RocketLandingEnv(RocketBaseEnv):
                     + (self.reward_options[6] * delta_f_rem) # to avoid spending fuel
                     )
             
-            if self.reward_options[0] == 2: #PHI_1
+            if self.reward_options[0] == 2: #PHI_2
                 # potential-based harmonic function PHI=1/||(s)||
                 self.reward += (
                     - (self.reward_options[1]) # negative offset to discourage staying in the air
@@ -406,7 +406,7 @@ class RocketLandingEnv(RocketBaseEnv):
                        - (self.reward_options[6] / (f_rem + 0.1))) # to avoid spending fuel
                     )
             
-            if self.reward_options[0] == 3: #PHI_2
+            if self.reward_options[0] == 3: #PHI_3
                 from math import log10
                 # potential-based log10 function PHI_2=-log(s+1)
                 delta_log_ang_vel =  - df*log10(angular_velocity+1) + log10(previous_angular_velocity+1)
@@ -424,9 +424,27 @@ class RocketLandingEnv(RocketBaseEnv):
                     + (self.reward_options[6] * delta_log_f_rem)
                     )
 
+            if self.reward_options[0] == 4: #PHI_4
+                from math import log2
+                # potential-based log10 function PHI_2=-log(s+1)
+                delta_log_ang_vel =  - df*log2(angular_velocity+1) + log2(previous_angular_velocity+1)
+                delta_log_ang_pos =  - df*log2(angular_position+1) + log2(previous_angular_position+1)
+                delta_log_lin_vel =  - df*log2(linear_velocity+1) + log2(previous_linear_velocity+1)
+                delta_log_distance =  - df*log2(distance_to_pad+1) + log2(previous_distance_to_pad+1)
+                delta_log_f_rem = df*log2(f_rem+1) - log2(self.previous_f_rem+1)
+                
+                self.reward += (
+                    - (self.reward_options[1]) # negative offset to discourage staying in the air
+                    + (self.reward_options[2] * delta_log_distance)
+                    + (self.reward_options[3] * delta_log_ang_vel) 
+                    + (self.reward_options[4] * delta_log_ang_pos )
+                    + (self.reward_options[5] * delta_log_lin_vel )
+                    + (self.reward_options[6] * delta_log_f_rem)
+                    )
 
-            if self.reward_options[0] == 4: #mix-match2
+            if self.reward_options[0] == 5: #mix-match2
                 from math import log10
+                from math import log2
                 delta_log_ang_pos =  - df*log10(angular_position+1) + log10(previous_angular_position+1)
                 delta_log_distance =  - df*log10(distance_to_pad+1) + log10(previous_distance_to_pad+1)
 
