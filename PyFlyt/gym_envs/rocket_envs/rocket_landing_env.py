@@ -218,112 +218,6 @@ class RocketLandingEnv(RocketBaseEnv):
         # compute reward
         if not self.sparse_reward:
 
-            '''
-            # composite reward together
-            
-            # self.reward += (
-            #     -5.0  # negative offset to discourage staying in the air
-            #     + (2.0 / offset_to_pad)  # encourage being near the pad
-            #     + (100.0 * progress_to_pad)  # encourage progress to landing pad
-            #     -(1.0 * abs(self.ang_vel[-1]))  # minimize spinning
-            #     - (1.0 * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
-            #     # + (5.0 * deceleration_bonus)  # reward deceleration when near pad
-            # )
-            
-            # -5.0  # negative offset to discourage staying in the air
-            # + (2.0 / offset_to_pad)  # encourage being near the pad
-            # + (100.0 * progress_to_pad)  # encourage progress to landing pad
-            # -(1.0 * abs(self.ang_vel[-1]))  # minimize spinning
-            # - (1.0 * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
-            # # + (5.0 * deceleration_bonus)  # reward deceleration when near pad
-            
-            # LfL: 18.06.2023
-            # variable reward function for optimisation
-            # "winning" conditions:
-            #     np.linalg.norm(self.previous_ang_vel) < 0.02
-            #     and np.linalg.norm(self.previous_lin_vel) < 0.02
-            #     and np.linalg.norm(self.ang_pos[:2]) < 0.1
-            # # print(self.reward_options)
-            
-            # angular_velocity = np.linalg.norm(self.ang_vel)
-            # angular_position = np.linalg.norm(self.ang_pos)
-            # distance_to_pad = np.linalg.norm(self.distance)
-            # linear_velocity = np.linalg.norm(self.lin_vel)
-            
-            # self.reward += (
-            #     - self.reward_options[0] # negative offset to discourage staying in the air
-            #     + (self.reward_options[1] / offset_to_pad)  # encourage being near the pad
-            #     + (self.reward_options[2] * progress_to_pad)  # encourage progress to landing pad
-            #     - (self.reward_options[3] * abs(self.ang_vel[-1]))  # minimize spinning
-            #     - (self.reward_options[4] * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
-            #     - (self.reward_options[5] * angular_velocity)  # not spinning
-            #     - (self.reward_options[6] * angular_position)  # and upright
-            #     - (self.reward_options[7] * linear_velocity)   # basically stopped
-            #     - (self.reward_options[8] * distance_to_pad)   # we want to be at the pad
-            #     )
-            
-            # LfL: 25.06.2023
-            # variable reward function 2 for optimisation: including all states
- 
-            ang_vel = self.state[:3]
-            ang_pos = self.state[3:7]
-            lin_vel = self.state[7:10]
-            lin_pos = self.state[10:13]
-            # action = self.state[13:20] # we don't need that for the rewards
-            aux_state = self.state[20:29]
-            # landing_pad_contact_obs = self.state[29:30]
-            # rotated_distance = self.state[30:]
-            
-            
-            angular_velocity = np.linalg.norm(ang_vel)
-            angular_position = np.linalg.norm(ang_pos[:2])
-            linear_velocity = np.linalg.norm(lin_vel)
-            distance_to_pad = np.linalg.norm(lin_pos)
-            lift_surface_0 = np.linalg.norm(aux_state[0])
-            lift_surface_1 = np.linalg.norm(aux_state[1])
-            lift_surface_2 = np.linalg.norm(aux_state[2])
-            lift_surface_3 = np.linalg.norm(aux_state[3])
-            ignition_state = np.linalg.norm(aux_state[4])
-            remaining_fuel = np.linalg.norm(aux_state[5])
-            current_throttle = np.linalg.norm(aux_state[6])
-            gimbal_state_0 = np.linalg.norm(aux_state[7])
-            gimbal_state_1 = np.linalg.norm(aux_state[8])
-            # landing_pad_contact = np.linalg.norm(landing_pad_contact_obs) # also don't need this, already included
-            # distance_to_pad_rotated = np.linalg.norm(rotated_distance) # and this one repeats the other
-
-            angular_velocity = np.linalg.norm(self.ang_vel)
-            angular_position = np.linalg.norm(self.ang_pos)
-            distance_to_pad = np.linalg.norm(self.distance)
-            linear_velocity = np.linalg.norm(self.lin_vel)
-            
-            self.reward += (
-                - self.reward_options[0] 
-                - (self.reward_options[1] * angular_velocity) 
-                - (self.reward_options[2] * angular_position) 
-                - (self.reward_options[3] * linear_velocity) 
-                - (self.reward_options[4] * distance_to_pad) 
-                - (self.reward_options[5] * lift_surface_0) 
-                - (self.reward_options[6] * lift_surface_1) 
-                - (self.reward_options[7] * lift_surface_2) 
-                - (self.reward_options[8] * lift_surface_3) 
-                - (self.reward_options[9] * ignition_state) 
-                + (self.reward_options[10] * remaining_fuel) 
-                - (self.reward_options[11] * current_throttle) 
-                - (self.reward_options[12] * gimbal_state_0) 
-                - (self.reward_options[13] * gimbal_state_1) 
-                )
-
-            # LfL: 28.06.2023
-            # Adding the original function again    
-            self.reward += (
-                -self.reward_options[14] # negative offset to discourage staying in the air
-                + (self.reward_options[15] / offset_to_pad)  # encourage being near the pad
-                + (self.reward_options[16] * progress_to_pad)  # encourage progress to landing pad
-                -(self.reward_options[17] * abs(self.ang_vel[-1]))  # minimize spinning
-                - (self.reward_options[18] * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
-            )
-            '''
-            
             ang_vel = self.state[:3]
             ang_pos = self.state[3:7]
             lin_vel = self.state[7:10]
@@ -345,7 +239,7 @@ class RocketLandingEnv(RocketBaseEnv):
             
             f_rem = np.linalg.norm(aux_state[5])
             
-            if self.reward_options[0] == 0: # original reward
+            if self.reward_options[0] == 0: # R_0 original reward 
                 # progress and distance to pad
                 progress_to_pad = float(  # noqa
                     np.linalg.norm(self.previous_distance[:2])
@@ -367,86 +261,124 @@ class RocketLandingEnv(RocketBaseEnv):
                 self.reward += (
                     - (self.reward_options[1]) # negative offset to discourage staying in the air
                     + (self.reward_options[2] / offset_to_pad)  # encourage being near the pad
-                    + (self.reward_options[3] * progress_to_pad)  # encourage progress to landing pad
-                    - (self.reward_options[4] * abs(self.ang_vel[-1]))  # minimize spinning
-                    - (self.reward_options[5] * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
-                    + (self.reward_options[6] * deceleration_bonus)  # reward deceleration when near pad
+                    + (self.reward_options[4] * progress_to_pad)  # encourage progress to landing pad
+                    - (self.reward_options[6] * abs(self.ang_vel[-1]))  # minimize spinning
+                    - (self.reward_options[8] * np.linalg.norm(self.ang_pos[:2]))  # penalize aggressive angles
+                    + (self.reward_options[10] * deceleration_bonus)  # reward deceleration when near pad
                     )
 
-            if self.reward_options[0] == 1: #PHI_1
+            if self.reward_options[0] == 1: # PHI_1
                 # potential-based difference of potentials function PHI_0=-||(s)||
+                delta_distance = - df*distance_to_pad + previous_distance_to_pad
                 delta_ang_vel = - df*angular_velocity + previous_angular_velocity
                 delta_ang_pos = - df*angular_position + previous_angular_position
-                delta_lin_vel = - df*linear_velocity + previous_linear_velocity
-                delta_distance = - df*distance_to_pad + previous_distance_to_pad
+                delta_lin_vel = - df*linear_velocity + previous_linear_velocity                
                 delta_f_rem = df*f_rem - self.previous_f_rem
     
                 self.reward += (
                     - (self.reward_options[1]) # negative offset to discourage staying in the air
                     + (self.reward_options[2] * delta_distance) # encourage progress to landing pad
-                    + (self.reward_options[3] * delta_ang_vel) # minimize spinning
-                    + (self.reward_options[4] * delta_ang_pos) # penalize aggressive angles
-                    + (self.reward_options[5] * delta_lin_vel) # decrease speed
-                    + (self.reward_options[6] * delta_f_rem) # to avoid spending fuel
+                    + (self.reward_options[4] * delta_ang_vel) # minimize spinning
+                    + (self.reward_options[6] * delta_ang_pos) # penalize aggressive angles
+                    + (self.reward_options[8] * delta_lin_vel) # decrease speed
+                    + (self.reward_options[10] * delta_f_rem) # to avoid spending fuel
                     )
             
-            if self.reward_options[0] == 2: #PHI_2
+            if self.reward_options[0] == 2: # PHI_2
                 # potential-based harmonic function PHI=1/||(s)||
                 self.reward += (
                     - (self.reward_options[1]) # negative offset to discourage staying in the air
                     + (df * (self.reward_options[2] / (distance_to_pad + 0.1))
                        - (self.reward_options[2] / (previous_distance_to_pad + 0.1)))# encourage progress to landing pad
-                    + (df * (self.reward_options[3] / (angular_velocity + 0.1)) 
-                       - (self.reward_options[3] / (previous_angular_velocity + 0.1))) # minimize spinning
-                    + (df * (self.reward_options[4] / (angular_position + 0.1)) 
-                       - (self.reward_options[4] / (previous_angular_position + 0.1))) # penalize aggressive angles
-                    + (df * (self.reward_options[5] / (linear_velocity + 0.1))
-                       - (self.reward_options[5] / (previous_linear_velocity + 0.1)))  # decrease speed
-                    + (df * (self.reward_options[6] / (self.previous_f_rem + 0.1))
-                       - (self.reward_options[6] / (f_rem + 0.1))) # to avoid spending fuel
+                    + (df * (self.reward_options[4] / (angular_velocity + 0.1)) 
+                       - (self.reward_options[4] / (previous_angular_velocity + 0.1))) # minimize spinning
+                    + (df * (self.reward_options[6] / (angular_position + 0.1)) 
+                       - (self.reward_options[6] / (previous_angular_position + 0.1))) # penalize aggressive angles
+                    + (df * (self.reward_options[8] / (linear_velocity + 0.1))
+                       - (self.reward_options[8] / (previous_linear_velocity + 0.1)))  # decrease speed
+                    + (df * (self.reward_options[10] / (self.previous_f_rem + 0.1))
+                       - (self.reward_options[10] / (f_rem + 0.1))) # to avoid spending fuel
                     )
             
-            if self.reward_options[0] == 3: #PHI_3
+            if self.reward_options[0] == 3: # PHI_3
                 from math import log10
                 # potential-based log10 function PHI_2=-log(s+1)
-                delta_log_ang_vel =  - df*log10(angular_velocity+1) + log10(previous_angular_velocity+1)
-                delta_log_ang_pos =  - df*log10(angular_position+1) + log10(previous_angular_position+1)
-                delta_log_lin_vel =  - df*log10(linear_velocity+1) + log10(previous_linear_velocity+1)
-                delta_log_distance =  - df*log10(distance_to_pad+1) + log10(previous_distance_to_pad+1)
-                delta_log_f_rem = df*log10(f_rem+1) - log10(self.previous_f_rem+1)
+                delta_log10_distance =  - df*log10(distance_to_pad+1) + log10(previous_distance_to_pad+1)
+                delta_log10_ang_vel =  - df*log10(angular_velocity+1) + log10(previous_angular_velocity+1)
+                delta_log10_ang_pos =  - df*log10(angular_position+1) + log10(previous_angular_position+1)
+                delta_log10_lin_vel =  - df*log10(linear_velocity+1) + log10(previous_linear_velocity+1)
+                delta_log10_f_rem = df*log10(f_rem+1) - log10(self.previous_f_rem+1)
                 
                 self.reward += (
                     - (self.reward_options[1]) # negative offset to discourage staying in the air
-                    + (self.reward_options[2] * delta_log_distance)
-                    + (self.reward_options[3] * delta_log_ang_vel) 
-                    + (self.reward_options[4] * delta_log_ang_pos )
-                    + (self.reward_options[5] * delta_log_lin_vel )
-                    + (self.reward_options[6] * delta_log_f_rem)
+                    + (self.reward_options[2] * delta_log10_distance)
+                    + (self.reward_options[4] * delta_log10_ang_vel) 
+                    + (self.reward_options[6] * delta_log10_ang_pos )
+                    + (self.reward_options[8] * delta_log10_lin_vel )
+                    + (self.reward_options[10] * delta_log10_f_rem)
                     )
 
-            if self.reward_options[0] == 4: #PHI_4
+            if self.reward_options[0] == 4: # PHI_4
                 from math import log2
                 # potential-based log10 function PHI_2=-log(s+1)
-                delta_log_ang_vel =  - df*log2(angular_velocity+1) + log2(previous_angular_velocity+1)
-                delta_log_ang_pos =  - df*log2(angular_position+1) + log2(previous_angular_position+1)
-                delta_log_lin_vel =  - df*log2(linear_velocity+1) + log2(previous_linear_velocity+1)
-                delta_log_distance =  - df*log2(distance_to_pad+1) + log2(previous_distance_to_pad+1)
-                delta_log_f_rem = df*log2(f_rem+1) - log2(self.previous_f_rem+1)
+                delta_log2_distance =  - df*log2(distance_to_pad+1) + log2(previous_distance_to_pad+1)
+                delta_log2_ang_vel =  - df*log2(angular_velocity+1) + log2(previous_angular_velocity+1)
+                delta_log2_ang_pos =  - df*log2(angular_position+1) + log2(previous_angular_position+1)
+                delta_log2_lin_vel =  - df*log2(linear_velocity+1) + log2(previous_linear_velocity+1)
+                delta_log2_f_rem = df*log2(f_rem+1) - log2(self.previous_f_rem+1)
                 
                 self.reward += (
                     - (self.reward_options[1]) # negative offset to discourage staying in the air
-                    + (self.reward_options[2] * delta_log_distance)
-                    + (self.reward_options[3] * delta_log_ang_vel) 
-                    + (self.reward_options[4] * delta_log_ang_pos )
-                    + (self.reward_options[5] * delta_log_lin_vel )
-                    + (self.reward_options[6] * delta_log_f_rem)
+                    + (self.reward_options[2] * delta_log2_distance)
+                    + (self.reward_options[4] * delta_log2_ang_vel) 
+                    + (self.reward_options[6] * delta_log2_ang_pos )
+                    + (self.reward_options[8] * delta_log2_lin_vel )
+                    + (self.reward_options[10] * delta_log2_f_rem)
                     )
 
-            if self.reward_options[0] == 5: #mix-match2
-                from math import log10
+            if self.reward_options[0] == 5: # Mix_1: best for each variable
+                progress_to_pad = float(  # noqa
+                    np.linalg.norm(self.previous_distance[:2])
+                    - np.linalg.norm(self.distance[:2])
+                )                
+                offset_to_pad = np.linalg.norm(self.distance[:2]) + 0.1  # noqa
+                
+                delta_ang_pos = - df*angular_position + previous_angular_position
+                
+                self.reward += (
+                    - (self.reward_options[1])
+                    + (self.reward_options[2] / offset_to_pad)
+                    + (self.reward_options[3] * progress_to_pad)
+                    + (df * (self.reward_options[4] / (angular_velocity + 0.1)) 
+                       - (self.reward_options[4] / (previous_angular_velocity + 0.1)))
+                    + (self.reward_options[6] * delta_ang_pos)
+                    + (df * (self.reward_options[8] / (linear_velocity + 0.1))
+                       - (self.reward_options[8] / (previous_linear_velocity + 0.1)))
+                    )
+
+            if self.reward_options[0] == 6: # Mix_2: second best for each variable
                 from math import log2
-                delta_log_ang_pos =  - df*log10(angular_position+1) + log10(previous_angular_position+1)
-                delta_log_distance =  - df*log10(distance_to_pad+1) + log10(previous_distance_to_pad+1)
+                delta_log2_distance =  - df*log2(distance_to_pad+1) + log2(previous_distance_to_pad+1)
+                delta_log2_ang_vel =  - df*log2(angular_velocity+1) + log2(previous_angular_velocity+1)
+                delta_log2_ang_pos =  - df*log2(angular_position+1) + log2(previous_angular_position+1)
+                
+                delta_lin_vel = - df*linear_velocity + previous_linear_velocity
+
+                self.reward +=  (
+                    - (self.reward_options[1])
+                    + (self.reward_options[2] * delta_log2_distance)
+                    + (self.reward_options[4] * delta_log2_ang_vel) 
+                    + (self.reward_options[6] * delta_log2_ang_pos )
+                    + (self.reward_options[8] * delta_lin_vel)
+                    )
+
+            if self.reward_options[0] == 7: # Mix_3: both Mix_1 and Mix_2
+                from math import log2
+                delta_log2_distance =  - df*log2(distance_to_pad+1) + log2(previous_distance_to_pad+1)
+                delta_log2_ang_vel =  - df*log2(angular_velocity+1) + log2(previous_angular_velocity+1)
+                delta_log2_ang_pos =  - df*log2(angular_position+1) + log2(previous_angular_position+1)
+                
+                delta_lin_vel = - df*linear_velocity + previous_linear_velocity
 
                 progress_to_pad = float(  # noqa
                     np.linalg.norm(self.previous_distance[:2])
@@ -454,28 +386,39 @@ class RocketLandingEnv(RocketBaseEnv):
                 )                
                 offset_to_pad = np.linalg.norm(self.distance[:2]) + 0.1  # noqa
                 
-                self.reward += (- (5) # negative offset to discourage staying in the air
-                                + (1 / offset_to_pad)  # encourage being near the pad
-                                + (100 * progress_to_pad)  # encourage progress to landing pad
-                                + (3 * delta_log_distance)
-                                - (2 * abs(self.ang_vel[-1]))  # minimize spinning
-                                + (df * (500 / (angular_velocity + 0.1)) 
-                                   - (500 / (previous_angular_velocity + 0.1))) # minimize spinning
-                                + (df * (5 / (angular_position + 0.1)) 
-                                   - (5 / (previous_angular_position + 0.1))) # penalize aggressive angles
-                                + (5 * delta_log_ang_pos)
-                                + (df * (750 / (linear_velocity + 0.1))
-                                   - (750 / (previous_linear_velocity + 0.1))))  # decrease speed       
+                delta_ang_pos = - df*angular_position + previous_angular_position
+                
+                self.reward += (
+                    - (self.reward_options[1])
+                    + (self.reward_options[2] / offset_to_pad)
+                    + (self.reward_options[2] * 100 * progress_to_pad)
+                    + (self.reward_options[3] * delta_log2_distance)
+                    + (df * (self.reward_options[4] / (angular_velocity + 0.1)) 
+                       - (self.reward_options[4] / (previous_angular_velocity + 0.1)))
+                    + (self.reward_options[5] * delta_log2_ang_vel) 
+                    + (self.reward_options[6] * delta_ang_pos)
+                    + (self.reward_options[7] * delta_log2_ang_pos )
+                    + (df * (self.reward_options[8] / (linear_velocity + 0.1))
+                       - (self.reward_options[8] / (previous_linear_velocity + 0.1)))
+                    + (self.reward_options[9] * delta_lin_vel)
+                    )
+
+            if self.reward_options[0] == 8: # Mix_4: 
+                pass
 
                 
+            if self.reward_options[0] == 9: # Mix_5: 
+                pass
+                
+
         # check if we touched the landing pad
         if self.env.contact_array[self.env.drones[0].Id, self.landing_pad_id]:
             self.landing_pad_contact = 1.0
-            self.reward += self.reward_options[7] 
+            self.reward += self.reward_options[12] 
             self.fitness += 1 # improves fitness if touching pad
         else:
             self.landing_pad_contact = 0.0
-            self.reward -= self.reward_options[8]
+            self.reward -= self.reward_options[13]
             return
 
         # if collision has more than 0.35 rad/s angular velocity, we dead
@@ -491,7 +434,7 @@ class RocketLandingEnv(RocketBaseEnv):
         ):
             self.info["fatal_collision"] = True
             self.termination |= True
-            self.reward -= self.reward_options[9]
+            self.reward -= self.reward_options[14]
             return
 
         # if our both velocities are less than 0.02 m/s and we upright, we LANDED!
@@ -504,7 +447,7 @@ class RocketLandingEnv(RocketBaseEnv):
             and np.linalg.norm(self.previous_lin_vel) < self.faktor*5.56 #0.02
             and np.linalg.norm(self.ang_pos[:2]) < self.faktor*0.2 #0.1
         ):
-            self.reward += self.reward_options[10] # just giving a very high completion bonus
+            self.reward += self.reward_options[15] # just giving a very high completion bonus
             self.info["env_complete"] = True
             self.termination |= True
             if self.faktor <= 1.1:
