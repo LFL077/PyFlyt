@@ -331,8 +331,8 @@ class RocketLandingEnv(RocketBaseEnv):
                     - (self.reward_options[1]) # negative offset to discourage staying in the air
                     + (self.reward_options[2] * delta_log2_distance)
                     + (self.reward_options[4] * delta_log2_ang_vel) 
-                    + (self.reward_options[6] * delta_log2_ang_pos )
-                    + (self.reward_options[8] * delta_log2_lin_vel )
+                    + (self.reward_options[6] * delta_log2_ang_pos)
+                    + (self.reward_options[8] * delta_log2_lin_vel)
                     + (self.reward_options[10] * delta_log2_f_rem)
                     )
 
@@ -403,12 +403,51 @@ class RocketLandingEnv(RocketBaseEnv):
                     + (self.reward_options[9] * delta_lin_vel)
                     )
 
-            if self.reward_options[0] == 8: # Mix_4: 
-                pass
+            if self.reward_options[0] == 8: # Mix_4: the best of each Mix?
+                from math import log2
 
+                progress_to_pad = float(  # noqa
+                    np.linalg.norm(self.previous_distance[:2])
+                    - np.linalg.norm(self.distance[:2])
+                )                
+                offset_to_pad = np.linalg.norm(self.distance[:2]) + 0.1  # noqa
                 
-            if self.reward_options[0] == 9: # Mix_5: 
-                pass
+                delta_log2_ang_vel =  - df*log2(angular_velocity+1) + log2(previous_angular_velocity+1)
+                delta_log2_ang_pos =  - df*log2(angular_position+1) + log2(previous_angular_position+1)
+                delta_lin_vel = - df*linear_velocity + previous_linear_velocity 
+                
+                self.reward += (
+                    - (self.reward_options[1])
+                    + (self.reward_options[2] / offset_to_pad)
+                    + (self.reward_options[3] * progress_to_pad)
+                    + (self.reward_options[4] * delta_log2_ang_vel) 
+                    + (self.reward_options[6] * delta_log2_ang_pos)
+                    + (df * (self.reward_options[8] / (linear_velocity + 0.1))
+                       - (self.reward_options[8] / (previous_linear_velocity + 0.1)))
+                    )
+                
+            if self.reward_options[0] == 9: # Mix_5: Phi_2 + Phi_4
+                from math import log2
+                delta_log2_distance =  - df*log2(distance_to_pad+1) + log2(previous_distance_to_pad+1)
+                delta_log2_ang_vel =  - df*log2(angular_velocity+1) + log2(previous_angular_velocity+1)
+                delta_log2_ang_pos =  - df*log2(angular_position+1) + log2(previous_angular_position+1)
+                delta_log2_lin_vel =  - df*log2(linear_velocity+1) + log2(previous_linear_velocity+1)
+                
+                self.reward += (
+                    - (self.reward_options[1]) # negative offset to discourage staying in the air
+                    + (df * (self.reward_options[2] / (distance_to_pad + 0.1))
+                       - (self.reward_options[2] / (previous_distance_to_pad + 0.1)))
+                    + (self.reward_options[3] * delta_log2_distance)
+                    + (df * (self.reward_options[4] / (angular_velocity + 0.1)) 
+                       - (self.reward_options[4] / (previous_angular_velocity + 0.1)))
+                    + (self.reward_options[5] * delta_log2_ang_vel) 
+                    + (df * (self.reward_options[6] / (angular_position + 0.1)) 
+                       - (self.reward_options[6] / (previous_angular_position + 0.1)))
+                    + (self.reward_options[7] * delta_log2_ang_pos)
+                    + (df * (self.reward_options[8] / (linear_velocity + 0.1))
+                       - (self.reward_options[8] / (previous_linear_velocity + 0.1)))
+                    + (self.reward_options[9] * delta_log2_lin_vel)
+                    )
                 
 
         # check if we touched the landing pad
