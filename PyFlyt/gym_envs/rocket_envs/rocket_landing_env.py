@@ -449,6 +449,54 @@ class RocketLandingEnv(RocketBaseEnv):
                     + (self.reward_options[9] * delta_log2_lin_vel)
                     )
                 
+            if self.reward_options[0] == 10: # y1 = a/(x+0.01) - b * x
+                self.reward += (
+                    - (self.reward_options[1]) 
+                    + (self.reward_options[2] / (distance_to_pad + 0.01))
+                    - (self.reward_options[3] * distance_to_pad)
+                    + (self.reward_options[4] / (angular_velocity + 0.01))
+                    - (self.reward_options[5] * angular_velocity)
+                    + (self.reward_options[6] / (angular_position + 0.01))
+                    - (self.reward_options[7] * angular_position)
+                    + (self.reward_options[8] / (linear_velocity + 0.1))
+                    - (self.reward_options[9] * linear_velocity)
+                    )
+
+            if self.reward_options[0] == 11: # y2 = a/(x+0.01) - b * log2(x+1)
+                from math import log2
+                self.reward += (
+                    - (self.reward_options[1]) 
+                    + (self.reward_options[2] / (distance_to_pad + 0.01))
+                    - (self.reward_options[3] * log2(distance_to_pad + 1))
+                    + (self.reward_options[4] / (angular_velocity + 0.01))
+                    - (self.reward_options[5] * log2(angular_velocity + 1))
+                    + (self.reward_options[6] / (angular_position + 0.01))
+                    - (self.reward_options[7] * log2(angular_position + 1))
+                    + (self.reward_options[8] / (linear_velocity + 0.1))
+                    - (self.reward_options[9] * log2(linear_velocity + 1))
+                    )
+
+            if self.reward_options[0] == 12: # y2 = a/(x+0.01) - b * log2(x+1)
+                from math import log2
+                progress_to_pad = float(  # noqa
+                    np.linalg.norm(self.previous_distance[:2])
+                    - np.linalg.norm(self.distance[:2])
+                )                
+                offset_to_pad = np.linalg.norm(self.distance[:2]) + 0.1  # noqa
+
+                self.reward += (
+                    - (self.reward_options[1]) 
+                    + (self.reward_options[2] / offset_to_pad)
+                    + (self.reward_options[3] * progress_to_pad)
+                    + (self.reward_options[4] / (angular_velocity + 0.01))
+                    - (self.reward_options[5] * log2(angular_velocity + 1))
+                    + (self.reward_options[6] / (angular_position + 0.01))
+                    - (self.reward_options[7] * log2(angular_position + 1))
+                    + (self.reward_options[8] / (linear_velocity + 0.1))
+                    - (self.reward_options[9] * log2(linear_velocity + 1))
+                    )
+
+
 
         # check if we touched the landing pad
         if self.env.contact_array[self.env.drones[0].Id, self.landing_pad_id]:
