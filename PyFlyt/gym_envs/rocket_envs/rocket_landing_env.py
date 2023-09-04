@@ -458,7 +458,7 @@ class RocketLandingEnv(RocketBaseEnv):
                     - (self.reward_options[5] * angular_velocity)
                     + (self.reward_options[6] / (angular_position + 0.01))
                     - (self.reward_options[7] * angular_position)
-                    + (self.reward_options[8] / (linear_velocity + 0.1))
+                    + (self.reward_options[8] / (linear_velocity + 0.01))
                     - (self.reward_options[9] * linear_velocity)
                     )
 
@@ -472,11 +472,11 @@ class RocketLandingEnv(RocketBaseEnv):
                     - (self.reward_options[5] * log2(angular_velocity + 1))
                     + (self.reward_options[6] / (angular_position + 0.01))
                     - (self.reward_options[7] * log2(angular_position + 1))
-                    + (self.reward_options[8] / (linear_velocity + 0.1))
+                    + (self.reward_options[8] / (linear_velocity + 0.01))
                     - (self.reward_options[9] * log2(linear_velocity + 1))
                     )
 
-            if self.reward_options[0] == 12: # y2 = a/(x+0.01) - b * log2(x+1)
+            if self.reward_options[0] == 12: # y3,dpad from Mix4 and y2 for the rest, gains are Mix 4 alpha 1 and Y2 alpha 1
                 from math import log2
                 progress_to_pad = float(  # noqa
                     np.linalg.norm(self.previous_distance[:2])
@@ -492,7 +492,7 @@ class RocketLandingEnv(RocketBaseEnv):
                     - (self.reward_options[5] * log2(angular_velocity + 1))
                     + (self.reward_options[6] / (angular_position + 0.01))
                     - (self.reward_options[7] * log2(angular_position + 1))
-                    + (self.reward_options[8] / (linear_velocity + 0.1))
+                    + (self.reward_options[8] / (linear_velocity + 0.01))
                     - (self.reward_options[9] * log2(linear_velocity + 1))
                     )
 
